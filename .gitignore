@@ -34,3 +34,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+# Calendar API secrets
+client_secrets.json
+sample.dat
