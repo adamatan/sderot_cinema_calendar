@@ -29,12 +29,15 @@ import argparse
 import httplib2
 import os
 import sys
-import json
+import MovieFetcher
+import datetime
 
 from apiclient import discovery
 from oauth2client import file
 from oauth2client import client
 from oauth2client import tools
+
+from prettytable import PrettyTable
 
 # Parser for command-line arguments.
 parser = argparse.ArgumentParser(
@@ -78,6 +81,47 @@ def get_service():
     service = discovery.build('calendar', 'v3', http=http)
     return service
 
+def get_calendars(service):
+    """Returns a list of calenders, each represented by a dictionary."""
+    return service.calendarList().list().execute()['items']
+
+def get_table(fields):
+    table=PrettyTable(field_names=fields)
+    for key in table.align:
+        table.align[key] = "l"
+    return table
+
+def print_calendars(fields=[u'id', u'description', u'summary', u'timeZone']):
+    """Prints a the key features of a calendar list."""
+    service=get_service()
+    calendars=get_calendars(service)
+
+    table=get_table(fields)
+
+    for cal in calendars:
+        row=[]
+        for field in fields:
+            row.append(cal.get(field, None))
+        table.add_row(row)
+    print table
+
+def get_events(calendarId):
+    service=get_service()
+    return service.events().list(calendarId=calendarId).execute()['items']
+
+def print_events(calendarId):
+    events=get_events(calendarId)
+    fields=[u'id', u'summary', u'start', u'end']
+    table=PrettyTable(field_names=fields)
+    for key in table.align:
+        table.align[key] = "l"
+    for event in events:
+        print event
+        row=[]
+        for field in fields:
+            row.append(event.get(field, None))
+        table.add_row(row)
+    print table
 
 
 def main(argv):
@@ -106,30 +150,44 @@ def main(argv):
     #    print item['summary'], item['id']
 
     tarbut_calendar_id="matan.name_8hnqrrn9h5e6ijkunlfkjetj9s@group.calendar.google.com"
-    events=service.events().list(calendarId=tarbut_calendar_id).execute()
-    for event in events['items']:
-        print event['summary'], event.keys()
+    sderot_calendar_id="matan.name_55j9srv12aamsve51u2vvm9cuk@group.calendar.google.com"
+    #events=service.events().list(calendarId=tarbut_calendar_id).execute()
+    #for event in events['items']:
+    #    print event['summary'], event.keys()
 
-    print service.events().quickAdd(calendarId=tarbut_calendar_id, text="Seret at November 4th, 2013 13:00-14:00", sendNotifications=None).execute()
+    #print service.events().quickAdd(calendarId=sderot_calendar_id, text="Seret at Sderot! November 5th, 2013 13:00-14:00", sendNotifications=None).execute()
+    #print get_calendars(service)
+    #print_calendars()
 
+    for screening in MovieFetcher.screenings:
+
+        print screening
+
+        event = {
+            'summary': screening.movie.title,
+            'location': 'הדגל 4, שדרות, ישראל',
+            'description': screening.movie.description,
+            'start': {
+                'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00") #2011-06-03T10:00:00.000-07:00
+            },
+            'end': {
+                'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
+            },
+
+            }
+
+        print event
+        created_event = service.events().insert(calendarId=sderot_calendar_id, body=event).execute()
+
+    print_events(sderot_calendar_id)
+    for event in get_events(sderot_calendar_id):
+      print type(event), event['id']
+      #service.events().delete(calendarId=sderot_calendar_id, eventId=event['id']).execute()
 
   except client.AccessTokenRefreshError:
     print ("The credentials have been revoked or expired, please re-run"
       "the application to re-authorize")
 
-
-# For more information on the Calendar API you can visit:
-#
-#   https://developers.google.com/google-apps/calendar/firstapp
-#
-# For more information on the Calendar API Python library surface you
-# can visit:
-#
-#   https://developers.google.com/resources/api-libraries/documentation/calendar/v3/python/latest/
-#
-# For information on the Python Client Library visit:
-#
-#   https://developers.google.com/api-client-library/python/start/get_started
 if __name__ == '__main__':
   main(sys.argv)
 
