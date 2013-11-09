@@ -126,8 +126,9 @@ def delete_events(service, calendar_id):
         service.events().delete(calendarId=calendar_id, eventId=event['id']).execute()
 
 def create_event(screening):
+    title_prepend = u"סינמטק שדרות: "
     event = {
-        'summary': screening.movie.title,
+        'summary': title_prepend+screening.movie.title,
         'location': 'הדגל 4, שדרות, ישראל',
         'description': screening.movie.description,
         'start': {
@@ -149,20 +150,27 @@ def delete_and_rebuild_calendar(calendar_id):
     for screening in schedule.screenings:
         service.events().insert(calendarId=calendar_id, body=create_event(screening)).execute()
 
+def find_event_for_screening(events, screening):
+    for event in events:
+        event_time=datetime.datetime.strptime(event.get('start')['dateTime'].split("+")[0], "%Y-%m-%dT%H:%M:%S")
+        if event_time==screening.date and event.get("description")==screening.movie.description:
+            return event.get("id")
+    return None
+
 def update_calendar(calendar_id):
     service=get_service()
     schedule=MovieFetcher.Schedule()
     events_already_in_calendar=get_events(calendar_id)
     print_events(events_already_in_calendar)
-    print schedule
 
     for screening in schedule.screenings:
-        print screening
-        for event in events_already_in_calendar:
-            event_time=event.get('start')['dateTime']
-            print event_time
-            break
-
+        event_id=find_event_for_screening(events_already_in_calendar, screening)
+        event=create_event(screening)
+        if event_id:
+            print "Updating!"
+            service.events().update(calendarId=calendar_id, eventId=event_id, body=event).execute()
+        else:
+            service.events().insert(calendarId=calendar_id, body=screening).execute()
 
 
 def main(argv):
