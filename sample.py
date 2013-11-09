@@ -107,7 +107,7 @@ def print_calendars(fields=[u'id', u'description', u'summary', u'timeZone']):
 
 def get_events(calendarId):
     service=get_service()
-    return service.events().list(calendarId=calendarId).execute()['items']
+    return service.events().list(calendarId=calendarId, maxResults=5000).execute()['items']
 
 def print_events(calendarId):
     events=get_events(calendarId)
@@ -122,6 +122,10 @@ def print_events(calendarId):
             row.append(event.get(field, None))
         table.add_row(row)
     print table
+
+def delete_events(service, calendar_id):
+    for event in get_events(calendar_id):
+        service.events().delete(calendarId=calendar_id, eventId=event['id']).execute()
 
 
 def main(argv):
@@ -158,31 +162,29 @@ def main(argv):
     #print service.events().quickAdd(calendarId=sderot_calendar_id, text="Seret at Sderot! November 5th, 2013 13:00-14:00", sendNotifications=None).execute()
     #print get_calendars(service)
     #print_calendars()
+    schedule=MovieFetcher.Schedule()
 
-    for screening in MovieFetcher.screenings:
+    for screening in schedule.screenings:
 
         print screening
-
-        event = {
-            'summary': screening.movie.title,
-            'location': 'הדגל 4, שדרות, ישראל',
-            'description': screening.movie.description,
-            'start': {
-                'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00") #2011-06-03T10:00:00.000-07:00
-            },
-            'end': {
-                'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
-            },
-
-            }
-
-        print event
-        created_event = service.events().insert(calendarId=sderot_calendar_id, body=event).execute()
+        #
+        #event = {
+        #    'summary': screening.movie.title,
+        #    'location': 'הדגל 4, שדרות, ישראל',
+        #    'description': screening.movie.description,
+        #    'start': {
+        #        'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00") #2011-06-03T10:00:00.000-07:00
+        #    },
+        #    'end': {
+        #        'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
+        #    },
+        #
+        #    }
+        #
+        #print event
+        #created_event = service.events().insert(calendarId=sderot_calendar_id, body=event).execute()
 
     print_events(sderot_calendar_id)
-    for event in get_events(sderot_calendar_id):
-      print type(event), event['id']
-      #service.events().delete(calendarId=sderot_calendar_id, eventId=event['id']).execute()
 
   except client.AccessTokenRefreshError:
     print ("The credentials have been revoked or expired, please re-run"
