@@ -131,13 +131,6 @@ def main(argv):
 
   try:
     sderot_calendar_id="matan.name_55j9srv12aamsve51u2vvm9cuk@group.calendar.google.com"
-    #events=service.events().list(calendarId=tarbut_calendar_id).execute()
-    #for event in events['items']:
-    #    print event['summary'], event.keys()
-
-    #print service.events().quickAdd(calendarId=sderot_calendar_id, text="Seret at Sderot! November 5th, 2013 13:00-14:00", sendNotifications=None).execute()
-    #print get_calendars(service)
-    #print_calendars()
     schedule=MovieFetcher.Schedule()
     events_already_in_calendar=get_events(sderot_calendar_id)
 
