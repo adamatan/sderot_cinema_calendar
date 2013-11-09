@@ -41,11 +41,13 @@ class Schedule():
         self.movies     = { movie.movie_id:movie for movie in self.movies }
         self.screenings = [Screening(screening_dict, self.movies) for screening_dict in self.schedule['screenings']]
 
-if __name__=='__main__':
-    schedule=Schedule()
-    table=PrettyTable(field_names=["date", "duration", "theater", "name"])
-    table.align['name']='r'
-    for screening in schedule.screenings:
-        table.add_row((screening.date, screening.movie.duration, screening.theatre, screening.movie.title))
+    def __str__(self):
+        table=PrettyTable(field_names=["date", "duration", "theater", "name"])
+        table.align['name']='r'
+        for screening in self.screenings:
+            table.add_row((screening.date, screening.movie.duration, screening.theatre, screening.movie.title))
+        return str(table)
 
-    print table
+if __name__=='__main__':
+    print Schedule()
+

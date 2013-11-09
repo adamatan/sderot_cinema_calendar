@@ -109,8 +109,7 @@ def get_events(calendarId):
     service=get_service()
     return service.events().list(calendarId=calendarId, maxResults=5000).execute()['items']
 
-def print_events(calendarId):
-    events=get_events(calendarId)
+def print_events(events):
     fields=[u'id', u'summary', u'start', u'end']
     table=PrettyTable(field_names=fields)
     for key in table.align:
@@ -128,31 +127,9 @@ def delete_events(service, calendar_id):
 
 
 def main(argv):
-  # Parse the command-line flags.
-  #flags = parser.parse_args(argv[1:])
-
-  # If the credentials don't exist or are invalid run through the native client
-  # flow. The Storage object will ensure that if successful the good
-  # credentials will get written back to the file.
-  #storage = file.Storage('sample.dat')
-  #credentials = storage.get()
-  #if credentials is None or credentials.invalid:
-  #  credentials = tools.run_flow(FLOW, storage, flags)
-
-  # Create an httplib2.Http object to handle our HTTP requests and authorize it
-  # with our good Credentials.
-  #http = httplib2.Http()
-  #http = credentials.authorize(http)
-
-  # Construct the service object for the interacting with the Calendar API.
-  #service = discovery.build('calendar', 'v3', http=http)
   service=get_service()
 
   try:
-    #for item in service.calendarList().list().execute()["items"]:
-    #    print item['summary'], item['id']
-
-    tarbut_calendar_id="matan.name_8hnqrrn9h5e6ijkunlfkjetj9s@group.calendar.google.com"
     sderot_calendar_id="matan.name_55j9srv12aamsve51u2vvm9cuk@group.calendar.google.com"
     #events=service.events().list(calendarId=tarbut_calendar_id).execute()
     #for event in events['items']:
@@ -162,6 +139,7 @@ def main(argv):
     #print get_calendars(service)
     #print_calendars()
     schedule=MovieFetcher.Schedule()
+    events_already_in_calendar=get_events(sderot_calendar_id)
 
     #for screening in schedule.screenings:
 
@@ -183,7 +161,8 @@ def main(argv):
         #print event
         #created_event = service.events().insert(calendarId=sderot_calendar_id, body=event).execute()
 
-    print_events(sderot_calendar_id)
+    print_events(get_events(sderot_calendar_id))
+    print(schedule)
 
   except client.AccessTokenRefreshError:
     print ("The credentials have been revoked or expired, please re-run"
