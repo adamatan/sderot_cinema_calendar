@@ -125,6 +125,27 @@ def delete_events(service, calendar_id):
     for event in get_events(calendar_id):
         service.events().delete(calendarId=calendar_id, eventId=event['id']).execute()
 
+def delete_and_rebuild_calendar(calendar_id):
+    service=get_service()
+    schedule=MovieFetcher.Schedule()
+    delete_events(service, calendar_id)
+    for screening in schedule.screenings:
+        event = {
+            'summary': screening.movie.title,
+            'location': 'הדגל 4, שדרות, ישראל',
+            'description': screening.movie.description,
+            'start': {
+                'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00")
+            },
+            'end': {
+                'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
+            },
+
+            }
+
+        print event
+        service.events().insert(calendarId=calendar_id, body=event).execute()
+
 
 def main(argv):
   service=get_service()
@@ -156,6 +177,7 @@ def main(argv):
 
     print_events(get_events(sderot_calendar_id))
     print(schedule)
+    delete_and_rebuild_calendar(sderot_calendar_id)
 
   except client.AccessTokenRefreshError:
     print ("The credentials have been revoked or expired, please re-run"
