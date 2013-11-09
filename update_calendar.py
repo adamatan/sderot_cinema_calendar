@@ -115,18 +115,19 @@ def print_events(events):
     for key in table.align:
         table.align[key] = "l"
     for event in events:
-        row=[]
-        for field in fields:
-            row.append(event.get(field, None))
+        row=[event['id'], event['summary'], event['start']['dateTime'], event['end']['dateTime']]
         table.add_row(row)
     print table
+
+def datestring_to_datetime(datestring):
+    return datetime.datetime.strptime(datestring.split("+")[0], "%Y-%m-%dT%H:%M:%S")
 
 def delete_events(service, calendar_id):
     for event in get_events(calendar_id):
         service.events().delete(calendarId=calendar_id, eventId=event['id']).execute()
 
 def create_event(screening):
-    title_prepend = u"סינמטק שדרות: "
+    title_prepend = u"שדרות: "
     event = {
         'summary': title_prepend+screening.movie.title,
         'location': 'הדגל 4, שדרות, ישראל',
@@ -134,14 +135,14 @@ def create_event(screening):
         'start': {
             'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00")
         },
+        'start.timeZone' : "Jerusalem/Israel",
+        'end.timeZone'   : "Jerusalem/Israel",
         'end': {
             'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
         },
 
         }
     return event
-
-
 
 def delete_and_rebuild_calendar(calendar_id):
     service=get_service()
@@ -152,7 +153,7 @@ def delete_and_rebuild_calendar(calendar_id):
 
 def find_event_for_screening(events, screening):
     for event in events:
-        event_time=datetime.datetime.strptime(event.get('start')['dateTime'].split("+")[0], "%Y-%m-%dT%H:%M:%S")
+        event_time=datestring_to_datetime(event.get('start')['dateTime'])
         if event_time==screening.date and event.get("description")==screening.movie.description:
             return event.get("id")
     return None
