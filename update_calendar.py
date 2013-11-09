@@ -116,7 +116,6 @@ def print_events(calendarId):
     for key in table.align:
         table.align[key] = "l"
     for event in events:
-        print event
         row=[]
         for field in fields:
             row.append(event.get(field, None))
@@ -164,9 +163,9 @@ def main(argv):
     #print_calendars()
     schedule=MovieFetcher.Schedule()
 
-    for screening in schedule.screenings:
+    #for screening in schedule.screenings:
 
-        print screening
+     #   print screening
         #
         #event = {
         #    'summary': screening.movie.title,
