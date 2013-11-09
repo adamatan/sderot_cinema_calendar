@@ -125,26 +125,44 @@ def delete_events(service, calendar_id):
     for event in get_events(calendar_id):
         service.events().delete(calendarId=calendar_id, eventId=event['id']).execute()
 
+def create_event(screening):
+    event = {
+        'summary': screening.movie.title,
+        'location': 'הדגל 4, שדרות, ישראל',
+        'description': screening.movie.description,
+        'start': {
+            'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00")
+        },
+        'end': {
+            'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
+        },
+
+        }
+    return event
+
+
+
 def delete_and_rebuild_calendar(calendar_id):
     service=get_service()
     schedule=MovieFetcher.Schedule()
     delete_events(service, calendar_id)
     for screening in schedule.screenings:
-        event = {
-            'summary': screening.movie.title,
-            'location': 'הדגל 4, שדרות, ישראל',
-            'description': screening.movie.description,
-            'start': {
-                'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00")
-            },
-            'end': {
-                'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
-            },
+        service.events().insert(calendarId=calendar_id, body=create_event(screening)).execute()
 
-            }
+def update_calendar(calendar_id):
+    service=get_service()
+    schedule=MovieFetcher.Schedule()
+    events_already_in_calendar=get_events(calendar_id)
+    print_events(events_already_in_calendar)
+    print schedule
 
-        print event
-        service.events().insert(calendarId=calendar_id, body=event).execute()
+    for screening in schedule.screenings:
+        print screening
+        for event in events_already_in_calendar:
+            event_time=event.get('start')['dateTime']
+            print event_time
+            break
+
 
 
 def main(argv):
@@ -152,32 +170,7 @@ def main(argv):
 
   try:
     sderot_calendar_id="matan.name_55j9srv12aamsve51u2vvm9cuk@group.calendar.google.com"
-    schedule=MovieFetcher.Schedule()
-    events_already_in_calendar=get_events(sderot_calendar_id)
-
-    #for screening in schedule.screenings:
-
-     #   print screening
-        #
-        #event = {
-        #    'summary': screening.movie.title,
-        #    'location': 'הדגל 4, שדרות, ישראל',
-        #    'description': screening.movie.description,
-        #    'start': {
-        #        'dateTime': screening.date.strftime("%Y-%m-%dT%H:%M:%S.000+02:00") #2011-06-03T10:00:00.000-07:00
-        #    },
-        #    'end': {
-        #        'dateTime': (screening.date+datetime.timedelta(0, screening.movie.duration*60)).strftime("%Y-%m-%dT%H:%M:%S.00+02:00")
-        #    },
-        #
-        #    }
-        #
-        #print event
-        #created_event = service.events().insert(calendarId=sderot_calendar_id, body=event).execute()
-
-    print_events(get_events(sderot_calendar_id))
-    print(schedule)
-    delete_and_rebuild_calendar(sderot_calendar_id)
+    update_calendar(sderot_calendar_id)
 
   except client.AccessTokenRefreshError:
     print ("The credentials have been revoked or expired, please re-run"
